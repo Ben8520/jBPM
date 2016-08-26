@@ -1,19 +1,28 @@
+import java.awt.*;
 
-public class Transition {
+class Transition {
 
     private final String name;
     private final String direction;
 
-    public Transition(String name, String direction) {
+    private Point origine = new Point();
+    private Point destination = new Point();
+
+    Transition(String name, String direction) {
         this.name = name;
         this.direction = direction;
     }
 
-    public String getName() {
+    void paint(Graphics2D svgGenerator) {
+        svgGenerator.setStroke(new BasicStroke(3));
+        svgGenerator.drawLine(origine.x, origine.y, destination.x, destination.y);
+    }
+
+    String getName() {
         return name;
     }
 
-    public String getDirection() {
+    String getDirection() {
         return direction;
     }
 

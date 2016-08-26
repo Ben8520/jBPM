@@ -49,27 +49,31 @@ public class Main {
 
     private void paint(Graphics2D svgGenerator, List<Block> blocks) {
         List<Block> activeBlocks = new ArrayList<>();
-        activeBlocks.add(Main.getBlockFromName(blocks, "start-state"));
+        StartState startState = (StartState) Main.getBlockFromName(blocks, "start-state");
+        activeBlocks.add(startState);
+        List<Block> blocksLeft = new ArrayList<>(blocks);
 
-        Integer x_svg = 0;
+        Integer x_svg;
         Integer y_svg = 0;
 
-        Integer x_offset = 0;
+        Integer x_offset;
         Integer y_offset = 150;
 
-        while (!blocks.isEmpty()) {
+        while (!blocksLeft.isEmpty()) {
 //            Paint active blocks and remove them from block list and
 //            explore new transitions from active blocks
             Set<Block> nextActiveBlocks = new HashSet<>();
             x_offset = 1200 / activeBlocks.size();
             x_svg = x_offset / 2;
+
+            Main.computeBestCoordinates(activeBlocks);
             for (Block block: activeBlocks) {
-                block.paint(svgGenerator, x_svg, y_svg);
-                blocks.remove(block);
+                block.paint(svgGenerator, x_svg, y_svg, x_offset, activeBlocks.size() == 1);
+                blocksLeft.remove(block);
 
                 List<Transition> transitions = block.getTransitions();
                 for (Transition transition: transitions) {
-                    Block nextBlock = Main.getBlockFromName(blocks, transition.getDirection());
+                    Block nextBlock = Main.getBlockFromName(blocksLeft, transition.getDirection());
 
                     if (nextBlock != null)
                         if (nextBlock.incArrivedTransition())
@@ -83,6 +87,22 @@ public class Main {
 
             y_svg += y_offset;
         }
+
+//        Once every block has been printed, add transitions into the mix
+        if (startState != null) {
+            startState.drawAllTransitions(svgGenerator, new HashSet<>(blocks));
+        }
+    }
+
+    private static void computeBestCoordinates(List<Block> activeBlocks) {
+
+        Set<Block> forkSons = new HashSet<>();
+        for (Block block: activeBlocks) {
+            List<Block> blocFathers = new ArrayList<>(block.getFathers());
+            if (block.getFathers().size() == 1 && blocFathers.get(0) instanceof Fork)
+                forkSons.add(block);
+        }
+
     }
 
     private static FileOutputStream openNewFile(String name) throws IOException {
@@ -113,9 +133,15 @@ public class Main {
             } else if ("end-state".equals(element.getName())) {
                 EndState endState = new EndState();
                 blocks.add(endState);
-            } else {
-                Block block = new Block(element.getName(), element.getAttributeValue("name"));
-                blocks.add(block);
+            } else if ("state".equals(element.getName())){
+                State state = new State(element.getAttributeValue("name"));
+                blocks.add(state);
+            } else if ("fork".equals(element.getName())){
+                Fork fork = new Fork(element.getAttributeValue("name"));
+                blocks.add(fork);
+            } else if ("decision".equals(element.getName())){
+                Decision decision = new Decision(element.getAttributeValue("name"));
+                blocks.add(decision);
             }
 
 //            Add transitions to newly created block
@@ -145,7 +171,7 @@ public class Main {
         return blocks;
     }
 
-    public static Block getBlockFromName(List<Block> blocks, String name) {
+    static Block getBlockFromName(List<Block> blocks, String name) {
         for (Block block: blocks) {
             if (name.equals(block.getName()))
                 return  block;
