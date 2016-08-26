@@ -9,7 +9,7 @@ abstract class Block {
     private Integer arrivedTransitions;
     List<Transition> transitions;
     private Set<Block> fathers;
-    Point bestCoordinates;
+    private Point bestCoordinates;
 
     Block(String name) {
         this.name = name;
@@ -28,16 +28,23 @@ abstract class Block {
 
         fathers.add(father);
 
+        if (transitionMayBeUsed(blocks, transition, father))
+            ++arrivingTransitions;
+    }
+
+    boolean transitionMayBeUsed(List<Block> blocks, Transition transition, Block father) {
         if (!transition.getName().contains("retour") && !transition.getName().contains("directionFaux"))
-            ++this.arrivingTransitions;
+            return  true;
 
         else if (transition.getName().contains("directionFaux")){
             HashSet<Block> sons = new HashSet<>();
             this.findSons(sons, blocks);
 
             if (!sons.contains(father))
-               ++this.arrivingTransitions;
+               return true;
         }
+
+        return false;
     }
 
     private void findSons(HashSet<Block> sons, List<Block> blocks) {
@@ -60,7 +67,9 @@ abstract class Block {
             List<Block> blockList = new ArrayList<>(blocksLeft);
             Block nextBlock = Main.getBlockFromName(blockList, transition.getDirection());
             if (blocksLeft.contains(nextBlock)) {
-                nextBlock.drawAllTransitions(svgGenerator, blocksLeft);
+                if (nextBlock != null) {
+                    nextBlock.drawAllTransitions(svgGenerator, blocksLeft);
+                }
             }
         }
     }
@@ -81,6 +90,14 @@ abstract class Block {
         return transitions;
     }
 
+    Transition getUniqueTransition(String direction) {
+        for (Transition transition: transitions) {
+            if (transition.getDirection().equals(direction))
+                return transition;
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         return "Block{" +
@@ -88,5 +105,39 @@ abstract class Block {
                 "transitions='" + transitions + '\'' +
                 "number of arriving transitions='" + arrivingTransitions + "\'" +
                 "}\n";
+    }
+
+    abstract Point getUniqueOrigine();
+
+    Point chooseAndUpdateCoordinates(Integer x, Integer y) {
+        x = (bestCoordinates.x != 0 ? bestCoordinates.x : x);
+        bestCoordinates.setLocation(x, y);
+        return bestCoordinates;
+    }
+
+    void setTransitionsEndpoints() {
+        for (Block father: fathers) {
+            Transition transition = father.getTransition(this);
+            if (transition != null) {
+                transition.setOrigine(father.getUniqueOrigine());
+                transition.setDestination(new Point(bestCoordinates.x, bestCoordinates.y));
+            }
+        }
+    }
+
+    Transition getTransition(Block block) {
+        for (Transition transition: transitions) {
+            if (transition.getDirection().equals(block.getName()))
+                return transition;
+        }
+        return null;
+    }
+
+    void setBestCoordinates(Point bestCoordinates) {
+        this.bestCoordinates = bestCoordinates;
+    }
+
+    public Point getBestCoordinates() {
+        return bestCoordinates;
     }
 }

@@ -10,11 +10,15 @@ class StartState extends Block{
 
     @Override
     void paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere) {
-        x = (bestCoordinates.x != 0 ? bestCoordinates.x : x);
-        y = (bestCoordinates.y != 0 ? bestCoordinates.y : y);
+       Point point = chooseAndUpdateCoordinates(x, y);
 
-        svgGenerator.fillOval(x-25, y, 50, 50);
-        this.origine.setLocation(x, y+50);
+        svgGenerator.fillOval(point.x-25, point.y, 50, 50);
+        this.origine.setLocation(point.x, point.y+50);
+    }
+
+    @Override
+    Point getUniqueOrigine() {
+        return origine;
     }
 
 

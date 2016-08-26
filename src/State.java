@@ -10,12 +10,18 @@ class State extends Block{
 
     @Override
     void paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere) {
-        x = (bestCoordinates.x != 0 ? bestCoordinates.x : x);
-        y = (bestCoordinates.y != 0 ? bestCoordinates.y : y);
+        Point point = chooseAndUpdateCoordinates(x, y);
 
-        svgGenerator.draw(new Rectangle(x-70, y, 140, 40));
-        this.printSimpleString(svgGenerator, this.name, 140, x-70, y + 24);
-        this.origine.setLocation(x, y+40);
+        svgGenerator.setStroke(new BasicStroke(3));
+        svgGenerator.draw(new Rectangle(point.x-70, point.y, 140, 40));
+        this.printSimpleString(svgGenerator, this.name, 140, point.x-70, point.y + 24);
+        svgGenerator.setStroke(new BasicStroke(1));
+        this.origine.setLocation(point.x, point.y+40);
+    }
+
+    @Override
+    Point getUniqueOrigine() {
+        return origine;
     }
 
     private void printSimpleString(Graphics2D g2d, String s, int width, int XPos, int YPos){

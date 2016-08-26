@@ -14,8 +14,14 @@ class Transition {
     }
 
     void paint(Graphics2D svgGenerator) {
-        svgGenerator.setStroke(new BasicStroke(3));
-        svgGenerator.drawLine(origine.x, origine.y, destination.x, destination.y);
+        if (!"end".equals(direction)) {
+            svgGenerator.setStroke(new BasicStroke(4));
+            int dy = (int)(0.8 * Math.abs(destination.y - origine.y));
+            svgGenerator.drawLine(origine.x, origine.y, origine.x, origine.y + dy);
+            svgGenerator.drawLine(origine.x, origine.y + dy, destination.x, origine.y + dy);
+            svgGenerator.drawLine(destination.x, origine.y + dy, destination.x, destination.y);
+            svgGenerator.setStroke(new BasicStroke(1));
+        }
     }
 
     String getName() {
@@ -32,5 +38,13 @@ class Transition {
                 "name='" + name + '\'' +
                 ", to='" + direction + '\'' +
                 '}';
+    }
+
+    void setOrigine(Point origine) {
+        this.origine = origine;
+    }
+
+    void setDestination(Point destination) {
+        this.destination = destination;
     }
 }

@@ -66,9 +66,10 @@ public class Main {
             x_offset = 1200 / activeBlocks.size();
             x_svg = x_offset / 2;
 
-            Main.computeBestCoordinates(activeBlocks);
+            Main.computeBestCoordinates(blocks, activeBlocks);
             for (Block block: activeBlocks) {
                 block.paint(svgGenerator, x_svg, y_svg, x_offset, activeBlocks.size() == 1);
+                block.setTransitionsEndpoints();
                 blocksLeft.remove(block);
 
                 List<Transition> transitions = block.getTransitions();
@@ -94,15 +95,25 @@ public class Main {
         }
     }
 
-    private static void computeBestCoordinates(List<Block> activeBlocks) {
-
-        Set<Block> forkSons = new HashSet<>();
+    private static void computeBestCoordinates(List<Block> blocks, List<Block> activeBlocks) {
         for (Block block: activeBlocks) {
-            List<Block> blocFathers = new ArrayList<>(block.getFathers());
-            if (block.getFathers().size() == 1 && blocFathers.get(0) instanceof Fork)
-                forkSons.add(block);
+            Set<Block> fathers = block.getFathers();
+            if (!fathers.isEmpty()) {
+                Integer best_x = 0;
+                Integer realFathers = 0;
+                for (Block father : fathers) {
+                    Transition transition = father.getUniqueTransition(block.getName());
+                    if (transition != null)
+                        if (block.transitionMayBeUsed(blocks, transition, father)) {
+                            best_x += father.getUniqueOrigine().x;
+                            realFathers++;
+                        }
+                }
+                if (realFathers != 0)
+                    best_x /= realFathers;
+                block.setBestCoordinates(new Point(best_x, 0));
+            }
         }
-
     }
 
     private static FileOutputStream openNewFile(String name) throws IOException {
