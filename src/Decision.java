@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.util.List;
 
 class Decision extends Block {
 
@@ -9,7 +10,7 @@ class Decision extends Block {
     }
 
     @Override
-    void paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere) {
+    void paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles) {
         Point point = chooseAndUpdateCoordinates(x, y);
 
         svgGenerator.setStroke(new BasicStroke(5));

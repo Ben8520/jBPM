@@ -58,17 +58,17 @@ abstract class Block {
         }
     }
 
-    abstract void paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere);
+    abstract void paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles);
 
-    void drawAllTransitions(Graphics2D svgGenerator, HashSet<Block> blocksLeft) {
+    void drawAllTransitions(Graphics2D svgGenerator, HashSet<Block> blocksLeft, List<Rectangle> rectangles) {
         blocksLeft.remove(this);
         for (Transition transition: transitions) {
-            transition.paint(svgGenerator);
+            transition.paint(svgGenerator, rectangles);
             List<Block> blockList = new ArrayList<>(blocksLeft);
             Block nextBlock = Main.getBlockFromName(blockList, transition.getDirection());
             if (blocksLeft.contains(nextBlock)) {
                 if (nextBlock != null) {
-                    nextBlock.drawAllTransitions(svgGenerator, blocksLeft);
+                    nextBlock.drawAllTransitions(svgGenerator, blocksLeft, rectangles);
                 }
             }
         }
@@ -137,7 +137,7 @@ abstract class Block {
         this.bestCoordinates = bestCoordinates;
     }
 
-    public Point getBestCoordinates() {
+    Point getBestCoordinates() {
         return bestCoordinates;
     }
 }

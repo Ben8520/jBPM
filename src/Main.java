@@ -52,6 +52,7 @@ public class Main {
         StartState startState = (StartState) Main.getBlockFromName(blocks, "start-state");
         activeBlocks.add(startState);
         List<Block> blocksLeft = new ArrayList<>(blocks);
+        List<Rectangle> rectangles = new ArrayList<>();
 
         Integer x_svg;
         Integer y_svg = 0;
@@ -68,7 +69,7 @@ public class Main {
 
             Main.computeBestCoordinates(blocks, activeBlocks);
             for (Block block: activeBlocks) {
-                block.paint(svgGenerator, x_svg, y_svg, x_offset, activeBlocks.size() == 1);
+                block.paint(svgGenerator, x_svg, y_svg, x_offset, activeBlocks.size() == 1, rectangles);
                 block.setTransitionsEndpoints();
                 blocksLeft.remove(block);
 
@@ -91,7 +92,7 @@ public class Main {
 
 //        Once every block has been printed, add transitions into the mix
         if (startState != null) {
-            startState.drawAllTransitions(svgGenerator, new HashSet<>(blocks));
+            startState.drawAllTransitions(svgGenerator, new HashSet<>(blocks), rectangles);
         }
     }
 
