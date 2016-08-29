@@ -6,7 +6,7 @@ class Transition {
 
     private final String name;
     private final String from;
-    private final String direction;
+    private String direction;
 
     private Point origine = new Point();
     private Point destination = new Point();
@@ -102,6 +102,10 @@ class Transition {
 
         if (this.destination.y == 0)
             this.destination.y = destination.y;
+    }
+
+    public void setDirection(String direction) {
+        this.direction = direction;
     }
 
     Point getDestination() {

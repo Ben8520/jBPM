@@ -1,5 +1,6 @@
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
+import org.jdom2.Attribute;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
@@ -7,12 +8,24 @@ import org.w3c.dom.DOMImplementation;
 
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class Main {
+    private static final Map<String, Boolean> booleanValues;
+    static {
+        Map<String, Boolean> map = new HashMap<>();
+        map.put("skipPublicite", false);
+        map.put("skipDCE", false);
+        map.put("skipRegistreDepot", false);
+        map.put("skipQuestionReponse", false);
+        map.put("skipRegistreRetrait", false);
+        map.put("skipCandidature", false);
+        map.put("skipRecommendation", false);
+        map.put("skipCalendrierReel", false);
+        map.put("skipSuiviEchange", false);
+        booleanValues = Collections.unmodifiableMap(map);
+    }
 
     public static void main(String[] args) {
         try {
@@ -60,7 +73,7 @@ public class Main {
         Integer x_offset;
         Integer y_offset = 150;
 
-        while (!blocksLeft.isEmpty()) {
+        while (!blocksLeft.isEmpty() && !activeBlocks.isEmpty()) {
 //            Paint active blocks and remove them from block list and
 //            explore new transitions from active blocks
             Set<Block> nextActiveBlocks = new HashSet<>();
@@ -137,8 +150,11 @@ public class Main {
     private static List<Block> createObjectsFromXML(List<Element> blockList) {
 
         List<Block> blocks = new ArrayList<>();
+        Map<String, String> skipMap = new HashMap<>();
 
-        for (Element element: blockList) {
+        for (Element element : blockList) {
+
+            String transitionDirection = "";
 
 //            Create blocks
             if ("start-state".equals(element.getName())) {
@@ -147,43 +163,89 @@ public class Main {
             } else if ("end-state".equals(element.getName())) {
                 EndState endState = new EndState();
                 blocks.add(endState);
-            } else if ("state".equals(element.getName())){
+            } else if ("state".equals(element.getName())) {
                 State state = new State(element.getAttributeValue("name"));
                 blocks.add(state);
-            } else if ("fork".equals(element.getName())){
+            } else if ("fork".equals(element.getName())) {
+//                Skip first fork named "forkHideScreens"
+                // if (!"forkHideScreens".equals(element.getAttributeValue("name"))) {
                 Fork fork = new Fork(element.getAttributeValue("name"));
                 blocks.add(fork);
-            } else if ("decision".equals(element.getName())){
+                //}
+            } else if ("decision".equals(element.getName())) {
                 Decision decision = new Decision(element.getAttributeValue("name"));
                 blocks.add(decision);
+
+                List<Element> handlers = element.getChildren();
+                Attribute attribute = handlers.get(0).getAttributes().get(0);
+                String handlerName = attribute.getValue();
+                if (handlerName.contains("SkipStepDecisionHandler")) {
+                    String boolVar = ((Element) handlers.get(0).getContent().get(1)).getContent().get(0).getValue();
+                    if (booleanValues.get(boolVar)) {
+//                            Follow "directionVrai" transition
+                        Iterator<Element> iter = handlers.iterator();
+                        while (iter.hasNext()) {
+                            Element element_it = iter.next();
+                            if ("directionVrai".equals(element_it.getAttributes().get(0).getValue())) {
+                                transitionDirection = element_it.getAttributes().get(1).getValue();
+                                skipMap.put(element.getAttributes().get(0).getValue(), transitionDirection);
+                            } else iter.remove();
+                        }
+                    } else {
+//                        Follow "directionFaux" transition
+                        Iterator<Element> iter = handlers.iterator();
+                        while (iter.hasNext()) {
+                            Element element_it = iter.next();
+                            if ("directionFaux".equals(element_it.getAttributes().get(0).getValue())) {
+                                transitionDirection = element_it.getAttributes().get(1).getValue();
+                                skipMap.put(element.getAttributes().get(0).getValue(), transitionDirection);
+                            } else iter.remove();
+                        }
+                    }
+                }
             }
 
 //            Add transitions to newly created block
             Block newBlock = blocks.get(blocks.size() - 1);
             List<Element> children = element.getChildren();
 
-            for (Element child: children)
+            for (Element child : children)
                 if ("transition".equals(child.getName())) {
                     Transition transition = new Transition(child.getAttributeValue("name"), newBlock.getName(), child.getAttributeValue("to"));
                     newBlock.addTransition(transition);
                 }
+
         }
 
 //        Update arriving transition number
-        for (Block block: blocks) {
+        Iterator<Block> iter = blocks.iterator();
+        while (iter.hasNext()) {
+            Block block = iter.next();
+            if (skipMap.get(block.getName()) != null) {
+                iter.remove();
+                continue;
+            }
+
             List<Transition> transitions = block.getTransitions();
 
-            for (Transition transition: transitions) {
+            Iterator<Transition> iterator = transitions.iterator();
+            while (iterator.hasNext()) {
+                Transition transition = iterator.next();
+                while (skipMap.get(transition.getDirection()) != null) {
+                    transition.setDirection(skipMap.get(transition.getDirection()));
+                }
+
                 Block directionBlock = getBlockFromName(blocks, transition.getDirection());
                 if (directionBlock != null) {
                     directionBlock.incArrivingTransition(blocks, transition, block);
                 } else System.out.println("ERROR in block named " + block.getName() +
-                        " due to transition named " + transition.getName());
+                        " due to transition named " + transition.getName() + " to " + transition.getDirection());
             }
         }
 
         return blocks;
     }
+
 
     static Block getBlockFromName(List<Block> blocks, String name) {
         for (Block block: blocks) {
