@@ -5,17 +5,19 @@ import java.util.List;
 class Transition {
 
     private final String name;
+    private final String from;
     private final String direction;
 
     private Point origine = new Point();
     private Point destination = new Point();
 
-    Transition(String name, String direction) {
+    Transition(String name, String from, String direction) {
         this.name = name;
+        this.from = from;
         this.direction = direction;
     }
 
-    void paint(Graphics2D svgGenerator, List<Rectangle> rectangles) {
+    void paint(Graphics2D svgGenerator, List<Rectangle> rectangles, List<Block> blocks) {
         if (!"end".equals(direction)) {
             svgGenerator.setStroke(new BasicStroke(4));
             Line2D line_1 = new Line2D.Double(origine.x, origine.y+3, origine.x, origine.y+18);
@@ -31,14 +33,43 @@ class Transition {
                 svgGenerator.draw(line_2);
                 svgGenerator.draw(line_3);
             }
-            else
-                handleLine(svgGenerator, rectangles);
+            else {
+                svgGenerator.draw(line_1);
+                handleLine(svgGenerator, rectangles, line_2, blocks);
+                svgGenerator.draw(line_3);
+            }
             svgGenerator.setStroke(new BasicStroke(1));
         }
     }
 
-    private void handleLine(Graphics2D svgGenerator, List<Rectangle> rectangles) {
-//    TODO
+    private void handleLine(Graphics2D svgGenerator, List<Rectangle> rectangles, Line2D line, List<Block> blocks) {
+
+        Integer x_offset = 0;
+        for (Rectangle rectangle: rectangles)
+            if (line.intersects(rectangle))
+                if (Math.abs(rectangle.x + (int)rectangle.getWidth() - (int)line.getX1()) > Math.abs(x_offset))
+                    if (rectangle.x + (int)rectangle.getWidth() - (int)line.getX1() > 0)
+                        x_offset = rectangle.x + (int)rectangle.getWidth() - (int)line.getX1();
+                    else
+                        x_offset = rectangle.x - (int)line.getX1();
+
+
+        if (x_offset > 0)
+            x_offset += 30;
+        else
+            x_offset -= 30;
+
+        Block block = Main.getBlockFromName(blocks, this.from);
+        if (block != null && block instanceof Decision) {
+            origine = ((Decision)block).getLeftOrRightCorner(x_offset);
+            svgGenerator.drawLine(origine.x, origine.y, origine.x + x_offset,origine.y);
+            svgGenerator.drawLine(origine.x + x_offset, origine.y, origine.x + x_offset, destination.y-18);
+        } else {
+            svgGenerator.drawLine(origine.x, origine.y+18, origine.x + x_offset, origine.y+18);
+            svgGenerator.drawLine(origine.x + x_offset, origine.y+18, destination.x + x_offset, destination.y-18);
+        }
+        svgGenerator.drawLine(origine.x + x_offset, destination.y-18, destination.x, destination.y-18);
+
     }
 
     String getName() {
@@ -58,10 +89,22 @@ class Transition {
     }
 
     void setOrigine(Point origine) {
-        this.origine = origine;
+        if (this.origine.x == 0)
+            this.origine.x = origine.x;
+
+        if (this.origine.y == 0)
+            this.origine.y = origine.y;
     }
 
     void setDestination(Point destination) {
-        this.destination = destination;
+        if (this.destination.x == 0)
+            this.destination.x = destination.x;
+
+        if (this.destination.y == 0)
+            this.destination.y = destination.y;
+    }
+
+    Point getDestination() {
+        return destination;
     }
 }

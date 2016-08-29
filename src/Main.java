@@ -70,7 +70,7 @@ public class Main {
             Main.computeBestCoordinates(blocks, activeBlocks);
             for (Block block: activeBlocks) {
                 block.paint(svgGenerator, x_svg, y_svg, x_offset, activeBlocks.size() == 1, rectangles);
-                block.setTransitionsEndpoints();
+                block.setTransitionsEndpoints(blocks, blocksLeft);
                 blocksLeft.remove(block);
 
                 List<Transition> transitions = block.getTransitions();
@@ -92,13 +92,13 @@ public class Main {
 
 //        Once every block has been printed, add transitions into the mix
         if (startState != null) {
-            startState.drawAllTransitions(svgGenerator, new HashSet<>(blocks), rectangles);
+            startState.drawAllTransitions(svgGenerator, blocks, new HashSet<>(blocks), rectangles);
         }
     }
 
     private static void computeBestCoordinates(List<Block> blocks, List<Block> activeBlocks) {
         for (Block block: activeBlocks) {
-            Set<Block> fathers = block.getFathers();
+            Set<Block> fathers = block.getUniqueFathers();
             if (!fathers.isEmpty()) {
                 Integer best_x = 0;
                 Integer realFathers = 0;
@@ -106,7 +106,9 @@ public class Main {
                     Transition transition = father.getUniqueTransition(block.getName());
                     if (transition != null)
                         if (block.transitionMayBeUsed(blocks, transition, father)) {
-                            best_x += father.getUniqueOrigine().x;
+                            Integer father_x = father.getUniqueOrigine().x;
+                            transition.setOrigine(new Point(father_x, 0));
+                            best_x += father_x;
                             realFathers++;
                         }
                 }
@@ -162,7 +164,7 @@ public class Main {
 
             for (Element child: children)
                 if ("transition".equals(child.getName())) {
-                    Transition transition = new Transition(child.getAttributeValue("name"), child.getAttributeValue("to"));
+                    Transition transition = new Transition(child.getAttributeValue("name"), newBlock.getName(), child.getAttributeValue("to"));
                     newBlock.addTransition(transition);
                 }
         }
