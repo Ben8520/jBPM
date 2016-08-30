@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 class State extends Block{
@@ -10,7 +11,7 @@ class State extends Block{
     }
 
     @Override
-    void paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles) {
+    List<Point> paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles) {
         Point point = chooseAndUpdateCoordinates(x, y);
 
         Rectangle rectangle = new Rectangle(point.x-70, point.y, 140, 40);
@@ -35,6 +36,9 @@ class State extends Block{
         this.printSimpleString(svgGenerator, this.name, 140, point.x-70, point.y + 24);
         svgGenerator.setStroke(new BasicStroke(1));
         this.origine.setLocation(point.x, point.y+40);
+
+        return Arrays.asList(new Point(point.x-70, point.y),
+                new Point(point.x + 70, point.y + 40));
     }
 
     @Override

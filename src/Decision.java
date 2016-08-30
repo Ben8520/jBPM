@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 class Decision extends Block {
@@ -10,32 +11,44 @@ class Decision extends Block {
     }
 
     @Override
-    void paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles) {
+    List<Point> paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles) {
         Point point = chooseAndUpdateCoordinates(x, y);
 
-        Polygon polygon = new Polygon(new int[]{point.x, point.x + 20, point.x, point.x - 20}, new int[]{point.y + 20, point.y, point.y - 20, point.y}, 4);
+        Integer outgoingTransition = transitions.size();
+        if (outgoingTransition > 1) {
+            Polygon polygon = new Polygon(new int[]{point.x, point.x + 20, point.x, point.x - 20}, new int[]{point.y + 20, point.y, point.y - 20, point.y}, 4);
 
-        boolean intersect = false;
-        for (Rectangle rectangle_it: rectangles) {
-            if (polygon.intersects(rectangle_it)) {
-                intersect = true;
-                break;
+            boolean intersect = false;
+            for (Rectangle rectangle_it : rectangles) {
+                if (polygon.intersects(rectangle_it)) {
+                    intersect = true;
+                    break;
+                }
             }
+
+            if (intersect) {
+                this.setBestCoordinates(new Point(this.getBestCoordinates().x - x_offset, 0));
+                point = chooseAndUpdateCoordinates(x - x_offset, y);
+                polygon = new Polygon(new int[]{point.x, point.x + 20, point.x, point.x - 20}, new int[]{point.y + 20, point.y, point.y - 20, point.y}, 4);
+            }
+
+            svgGenerator.setStroke(new BasicStroke(5));
+            svgGenerator.drawPolygon(polygon);
+            svgGenerator.setColor(Color.red);
+            svgGenerator.drawString(this.getName(), point.x + 15, point.y - 15);
+            svgGenerator.fillPolygon(polygon);
+            svgGenerator.setStroke(new BasicStroke(1));
+            svgGenerator.setColor(Color.black);
+        } else if (outgoingTransition == 1) {
+            svgGenerator.setStroke(new BasicStroke(4));
+            svgGenerator.drawLine(point.x, point.y - 20, point.x, point.y + 20);
+            svgGenerator.setStroke(new BasicStroke(1));
         }
 
-        if (intersect) {
-            this.setBestCoordinates(new Point(this.getBestCoordinates().x - x_offset, 0));
-            point = chooseAndUpdateCoordinates(x - x_offset, y);
-            polygon = new Polygon(new int[]{point.x, point.x + 20, point.x, point.x - 20}, new int[]{point.y + 20, point.y, point.y - 20, point.y}, 4);
-        }
+        this.origine.setLocation(point.x, point.y + 20);
 
-        svgGenerator.setStroke(new BasicStroke(5));
-        svgGenerator.drawPolygon(polygon);
-        svgGenerator.setColor(Color.red);
-        svgGenerator.fillPolygon(polygon);
-        svgGenerator.setStroke(new BasicStroke(1));
-        svgGenerator.setColor(Color.black);
-        this.origine.setLocation(point.x, point.y+20);
+        return Arrays.asList(new Point(point.x - 20, point.y -20),
+                new Point(point.x + 20, point.y + 20));
     }
 
     @Override
@@ -48,7 +61,7 @@ class Decision extends Block {
         for (Block father: getFathers()) {
             Transition transition = father.getTransition(this);
             if (transition != null) {
-                transition.setOrigine(father.getUniqueOrigine());
+                transition.setOrigine(father.getFatherOrigine());
                 transition.setDestination(new Point(getBestCoordinates().x, getBestCoordinates().y - 20));
             }
         }

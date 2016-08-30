@@ -84,6 +84,7 @@ class Transition {
     public String toString() {
         return "Transition{" +
                 "name='" + name + '\'' +
+                ", from='" + from + '\'' +
                 ", to='" + direction + '\'' +
                 '}';
     }
@@ -110,5 +111,24 @@ class Transition {
 
     Point getDestination() {
         return destination;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Transition that = (Transition) o;
+
+        if (!from.equals(that.from)) return false;
+        return direction.equals(that.direction);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = from.hashCode();
+        result = 31 * result + direction.hashCode();
+        return result;
     }
 }

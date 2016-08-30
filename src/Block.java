@@ -7,17 +7,19 @@ abstract class Block {
     final String name;
     private Integer arrivingTransitions;
     private Integer arrivedTransitions;
-    List<Transition> transitions;
+    Set<Transition> transitions;
     private List<Block> fathers;
     private Point bestCoordinates;
+    private Boolean skipped;
 
     Block(String name) {
         this.name = name;
         this.arrivingTransitions = 0;
         this.arrivedTransitions = 0;
-        this.transitions = new ArrayList<>();
+        this.transitions = new HashSet<>();
         this.fathers= new ArrayList<>();
         this.bestCoordinates = new Point();
+        this.skipped = false;
     }
 
     boolean incArrivedTransition() {
@@ -58,7 +60,16 @@ abstract class Block {
         }
     }
 
-    abstract void paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles);
+    abstract List<Point> paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles);
+
+    List<Transition> notFinalTransitions() {
+        List<Transition> list = new ArrayList<>();
+        for (Transition transition: transitions)
+            if (!"end".equals(transition.getDirection()))
+                list.add(transition);
+
+        return list;
+    }
 
     void drawAllTransitions(Graphics2D svgGenerator, List<Block> blocks, HashSet<Block> blocksLeft, List<Rectangle> rectangles) {
         blocksLeft.remove(this);
@@ -78,9 +89,15 @@ abstract class Block {
         transitions.add(transition);
     }
 
+    Set<Transition> reloadTransition() {
+        this.transitions = new HashSet<>(transitions);
+        return transitions;
+    }
+
     Set<Block> getUniqueFathers() {
         return new HashSet<>(fathers);
     }
+
     List<Block> getFathers() {
         return fathers;
     }
@@ -89,7 +106,7 @@ abstract class Block {
         return name;
     }
 
-    List<Transition> getTransitions() {
+    Set<Transition> getTransitions() {
         return transitions;
     }
 
@@ -122,7 +139,7 @@ abstract class Block {
         for (Block father: fathers) {
             Transition transition = father.getTransition(this);
             if (transition != null) {
-                transition.setOrigine(father.getUniqueOrigine());
+                transition.setOrigine(father.getFatherOrigine());
                 transition.setDestination(new Point(bestCoordinates.x, bestCoordinates.y));
             }
         }
@@ -130,8 +147,12 @@ abstract class Block {
         for (Transition transition: transitions) {
             Block destination = Main.getBlockFromName(blocks, transition.getDirection());
             if (!blocksLeft.contains(destination))
-            transition.setOrigine(this.bestCoordinates);
+                transition.setOrigine(this.bestCoordinates);
         }
+    }
+
+    Point getFatherOrigine() {
+        return this.getUniqueOrigine();
     }
 
     Transition getTransition(Block block) {
@@ -148,5 +169,17 @@ abstract class Block {
 
     Point getBestCoordinates() {
         return bestCoordinates;
+    }
+
+    public Integer getArrivingTransitions() {
+        return arrivingTransitions;
+    }
+
+    public Boolean getSkipped() {
+        return skipped;
+    }
+
+    public void setSkipped(Boolean skipped) {
+        this.skipped = skipped;
     }
 }

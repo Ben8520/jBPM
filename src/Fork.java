@@ -1,8 +1,6 @@
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 class Fork extends Block {
     private Set<Point> origines = new LinkedHashSet<>();
@@ -12,40 +10,31 @@ class Fork extends Block {
     }
 
     @Override
-    void paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles) {
+    List<Point> paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles) {
         Integer fork_offset = 350;
         Point point = chooseAndUpdateCoordinates(x, y);
+        Integer outgoingTransition = this.notFinalTransitions().size();
 
-        svgGenerator.setColor(Color.BLUE);
+        if (outgoingTransition > 1)
+            svgGenerator.setColor(Color.BLUE);
         svgGenerator.setStroke(new BasicStroke(4));
         svgGenerator.drawLine(point.x, point.y-20, point.x, point.y);
-        Integer outgoingTransition = this.transitions.size();
+
 
         svgGenerator.drawLine(point.x - (outgoingTransition-1)*fork_offset, point.y, point.x + (outgoingTransition-1)*fork_offset, point.y);
+        if (outgoingTransition > 1)
+            svgGenerator.drawString(this.getName(), point.x + (outgoingTransition-1)*fork_offset - 100, point.y - 5);
+
         for (Integer x_it = point.x - (outgoingTransition-1)*fork_offset; x_it <= point.x + (outgoingTransition-1)*fork_offset; x_it += 2*fork_offset) {
             svgGenerator.drawLine(x_it, point.y, x_it, point.y+40);
             this.origines.add(new Point(x_it, point.y+40));
         }
-//        if (onlyOneHere) {
-//            Integer outgoingTransition = this.transitions.size();
-//            Integer next_x_offset = 1200 / 2 / outgoingTransition;
-//            svgGenerator.drawLine(next_x_offset, point.y + 20, 1200 - next_x_offset, point.y + 20);
-//            for (Integer x_it = next_x_offset; x_it <= 1220 - next_x_offset; x_it += (1200 - 2*next_x_offset)/(outgoingTransition-1)) {
-//                if (1200 - next_x_offset - x_it < 5) x_it = 1200 - next_x_offset;
-//                if (sqrt((point.x - x_it)^2) < 5) x_it = point.x;
-//                svgGenerator.drawLine(x_it, point.y + 20, x_it, point.y + 40);
-//                this.origines.add(new Point(x_it, point.y+40));
-//            }
-//        }
-//        else {
-//            svgGenerator.drawLine(point.x - x_offset / 4, point.y + 20, point.x + x_offset / 4, point.y + 20);
-//            for (Integer x_it = point.x - x_offset/4; x_it <= point.x + x_offset/4; x_it += 2*x_offset/4) {
-//                svgGenerator.drawLine(x_it, point.y + 20, x_it, point.y + 40);
-//                this.origines.add(new Point(x_it, point.y + 40));
-//            }
-//        }
+
         svgGenerator.setStroke(new BasicStroke(1));
         svgGenerator.setColor(Color.BLACK);
+
+        return Arrays.asList(new Point(point.x - (outgoingTransition-1)*fork_offset, point.y - 20),
+                new Point(point.x + (outgoingTransition-1)*fork_offset, point.y + 40));
     }
 
     @Override
@@ -55,6 +44,12 @@ class Fork extends Block {
         origines.remove(retVal);
         origines.add(retVal);
         return retVal;
+    }
+
+    @Override
+    Point getFatherOrigine() {
+        List<Point> origineList = new ArrayList<>(origines);
+        return origineList.get(origineList.size() - 1);
     }
 
     Point getOrigine(int i) {
