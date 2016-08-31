@@ -11,8 +11,8 @@ class Fork extends Block {
     }
 
     @Override
-    List<Point> paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles) {
-        Integer fork_offset = 350;
+    List<Point> paint(Graphics2D svgGenerator, Integer x, Integer y, Integer x_offset, boolean onlyOneHere, List<Rectangle> rectangles, List<Block> blocks) {
+        Integer fork_offset = computeForkOffset(blocks);
         Point point = chooseAndUpdateCoordinates(x, y);
         Integer outgoingTransition = this.notFinalTransitions().size();
 
@@ -36,6 +36,19 @@ class Fork extends Block {
 
         return Arrays.asList(new Point(point.x - (outgoingTransition-1)*fork_offset, point.y - 20),
                 new Point(point.x + (outgoingTransition-1)*fork_offset, point.y + 40));
+    }
+
+    private Integer computeForkOffset(List<Block> blocks) {
+        Integer forkOffset = 350;
+
+        for (Transition transition: transitions) {
+            Block nextBlock = Main.getBlockFromName(blocks, transition.getDirection());
+            if (nextBlock instanceof Fork) {
+                forkOffset += (nextBlock.notFinalTransitions().size() - 2) * 350;
+            }
+        }
+
+        return (forkOffset > 350 ? forkOffset + 300 : 350);
     }
 
     @Override

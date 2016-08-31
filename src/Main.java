@@ -111,7 +111,7 @@ public class Main {
 
             Main.computeBestCoordinates(blocks, activeBlocks);
             for (Block block: activeBlocks) {
-                List<Point> maxs = block.paint(svgGenerator, x_svg, y_svg, x_offset, activeBlocks.size() == 1, rectangles);
+                List<Point> maxs = block.paint(svgGenerator, x_svg, y_svg, x_offset, activeBlocks.size() == 1, rectangles, blocks);
                 min = smallerOne(maxs.get(0), min);
                 max = greaterOne(maxs.get(1), max);
                 block.setTransitionsEndpoints(blocks, blocksLeft);
