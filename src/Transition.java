@@ -18,7 +18,7 @@ class Transition {
     }
 
     void paint(Graphics2D svgGenerator, List<Rectangle> rectangles, List<Block> blocks) {
-        if (!"end".equals(direction)) {
+        if (!"end".equals(direction) && (origine.x != 0 && origine.y != 0) && (destination.x != 0 && destination.y != 0)) {
             svgGenerator.setStroke(new BasicStroke(4));
             Line2D line_1 = new Line2D.Double(origine.x, origine.y+3, origine.x, origine.y+18);
             Line2D line_2 = new Line2D.Double(origine.x, origine.y+18, destination.x, destination.y-38);
@@ -39,7 +39,8 @@ class Transition {
     private Boolean lineIntersectSth(List<Rectangle> rectangles, Line2D line) {
         for (Rectangle rectangle: rectangles)
             if (line.intersects(rectangle))
-                return true;
+                if (!(line.getX1() != line.getX2() && rectangle.width == 20))
+                    return true;
 
         return false;
     }
@@ -64,7 +65,7 @@ class Transition {
                 loop_offset -= 30;
             x_offset += loop_offset;
 
-            line = new Line2D.Double(origine.x + x_offset + 20, origine.y, origine.x + x_offset, destination.y);
+            line = new Line2D.Double(origine.x + x_offset + (x_offset < 0 ? (-20) : 20), origine.y, origine.x + x_offset + (x_offset < 0 ? (-20) : 20), destination.y);
         } while (lineIntersectSth(rectangles, line));
 
         Block block = Main.getBlockFromName(blocks, this.from);
@@ -72,13 +73,15 @@ class Transition {
             origine = ((Decision)block).getLeftOrRightCorner(x_offset);
             svgGenerator.drawLine(origine.x, origine.y, origine.x + x_offset,origine.y);
             svgGenerator.drawLine(origine.x + x_offset, origine.y, origine.x + x_offset, destination.y-38);
+            rectangles.add(new Rectangle(origine.x + x_offset - 10, (origine.y < destination.y ? origine.y : destination.y), 20, Math.abs(destination.y - origine.y)- 38));
+            svgGenerator.drawLine(origine.x + x_offset, destination.y-38, destination.x, destination.y-38);
         } else {
-            svgGenerator.drawLine(origine.x, origine.y+18, origine.x + x_offset, origine.y+18);
+            svgGenerator.drawLine(origine.x, origine.y+3, origine.x, origine.y+18);
+            svgGenerator.drawLine(origine.x, origine.y + 18, origine.x + x_offset, origine.y+18);
             svgGenerator.drawLine(origine.x + x_offset, origine.y+18, destination.x + x_offset, destination.y-38);
+            rectangles.add(new Rectangle(destination.x + x_offset - 10, (origine.y < destination.y ? origine.y : destination.y), 20, Math.abs(destination.y - origine.y)- 38));
+            svgGenerator.drawLine(destination.x + x_offset, destination.y-38, destination.x, destination.y-38);
         }
-        rectangles.add(new Rectangle(origine.x + x_offset - 10, (origine.y < destination.y ? origine.y : destination.y), 20, Math.abs(destination.y - origine.y)- 38));
-        svgGenerator.drawLine(origine.x + x_offset, destination.y-38, destination.x, destination.y-38);
-
     }
 
     String getName() {

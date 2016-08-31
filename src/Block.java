@@ -35,7 +35,9 @@ abstract class Block {
     }
 
     boolean transitionMayBeUsed(List<Block> blocks, Transition transition, Block father) {
-        if (!transition.getName().contains("retour") && !transition.getName().contains("directionFaux"))
+        if (transition.getName() == null)
+            return  true;
+        if(!transition.getName().contains("retour") && !transition.getName().contains("directionFaux"))
             return  true;
 
         else if (transition.getName().contains("directionFaux")){
@@ -43,7 +45,7 @@ abstract class Block {
             this.findSons(sons, blocks);
 
             if (!sons.contains(father))
-               return true;
+                return true;
         }
 
         return false;
@@ -53,10 +55,16 @@ abstract class Block {
 
         for (Transition transition: transitions) {
             Block directionBlock = Main.getBlockFromName(blocks, transition.getDirection());
-            if (sons.add(directionBlock) && !transition.getName().contains("retour") && !transition.getName().contains("directionFaux"))
-                if (directionBlock != null) {
-                    directionBlock.findSons(sons, blocks);
+            if (sons.add(directionBlock)) {
+                if (transition.getName() != null) {
+                    if (!transition.getName().contains("retour") && !transition.getName().contains("directionFaux"))
+                        if (directionBlock != null)
+                            directionBlock.findSons(sons, blocks);
+                } else {
+                    if (directionBlock != null)
+                        directionBlock.findSons(sons, blocks);
                 }
+            }
         }
     }
 

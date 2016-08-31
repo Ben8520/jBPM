@@ -68,13 +68,13 @@ public class Main {
     }
 
     private static void updateFileConfiguration(List<Point> points, Path path) throws IOException {
-        Integer width = points.get(1).x - points.get(0).x + 200;
+        Integer width = points.get(1).x - points.get(0).x + 300;
         Integer height = points.get(1).y - points.get(0).y + 200;
 
-        Integer x_min = points.get(0).x - 100;
+        Integer x_min = points.get(0).x - 150;
         Integer y_min = points.get(0).y - 100;
 
-        Integer translate_x = -(points.get(0).x) + 100;
+        Integer translate_x = -(points.get(0).x) + 150;
         Integer translate_y = -(points.get(0).y) + 100;
 
         List<String> svgContent = new ArrayList<>(Files.readAllLines(path, StandardCharsets.UTF_8));
@@ -87,8 +87,8 @@ public class Main {
     }
 
     private List<Point> paint(Graphics2D svgGenerator, List<Block> blocks) {
-        Point min = new Point();
-        Point max = new Point();
+        Point min = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        Point max = new Point(Integer.MIN_VALUE, Integer.MIN_VALUE);
 
         List<Block> activeBlocks = new ArrayList<>();
         StartState startState = (StartState) Main.getBlockFromName(blocks, "start-state");
@@ -274,6 +274,8 @@ public class Main {
     }
 
     private static void setBlockSkipped(List<Block> blocks, Block block, String finalDestination) {
+        if (block == null)
+            return;
 
         Set<Block> activeBlocks = new HashSet<>();
         Set<Block> doneBlocks = new HashSet<>();
