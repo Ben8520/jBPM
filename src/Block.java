@@ -172,6 +172,11 @@ abstract class Block {
     }
 
     void setBestCoordinates(Point bestCoordinates) {
+        this.bestCoordinates.x = (this.bestCoordinates.x == 0 ? bestCoordinates.x : this.bestCoordinates.x);
+        this.bestCoordinates.y = (this.bestCoordinates.y == 0 ? bestCoordinates.y : this.bestCoordinates.y);
+    }
+
+    void overideBestCoordinates(Point bestCoordinates) {
         this.bestCoordinates = bestCoordinates;
     }
 
@@ -190,4 +195,5 @@ abstract class Block {
     public void setSkipped(Boolean skipped) {
         this.skipped = skipped;
     }
+
 }

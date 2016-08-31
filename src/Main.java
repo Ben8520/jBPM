@@ -334,7 +334,6 @@ public class Main {
                 Integer best_x = 0;
                 Integer realFathers = 0;
                 for (Block father : fathers) {
-                    if (father instanceof Fork) continue;
                     Transition transition = father.getUniqueTransition(block.getName());
                     if (transition != null)
                         if (block.transitionMayBeUsed(blocks, transition, father)) {
@@ -345,20 +344,12 @@ public class Main {
                         }
                 }
 
-                for (Block father : fathers) {
-                    if (!(father instanceof Fork)) continue;
-                    Transition transition = father.getUniqueTransition(block.getName());
-                    if (transition != null)
-                        if (block.transitionMayBeUsed(blocks, transition, father)) {
-                            Integer father_x = father.getUniqueOrigine(best_x).x;
-                            transition.setOrigine(new Point(father_x, 0));
-                            best_x += father_x;
-                            realFathers++;
-                        }
-                }
                 if (realFathers != 0)
                     best_x /= realFathers;
                 block.setBestCoordinates(new Point(best_x, 0));
+            }
+            if (block instanceof Fork) {
+                ((Fork)block).assignOrigineToChildren(blocks);
             }
         }
     }

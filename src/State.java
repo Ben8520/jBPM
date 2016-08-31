@@ -24,7 +24,7 @@ class State extends Block{
         }
 
         if (intersect) {
-            this.setBestCoordinates(new Point(this.getBestCoordinates().x + x_offset, 0));
+            this.overideBestCoordinates(new Point(this.getBestCoordinates().x + x_offset, 0));
             point = chooseAndUpdateCoordinates(x + x_offset, y);
             rectangle = new Rectangle(point.x-70, point.y, 140, 40);
         }

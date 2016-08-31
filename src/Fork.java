@@ -98,4 +98,64 @@ class Fork extends Block {
                 transition.setOrigine(this.getBestCoordinates());
         }
     }
+
+    void assignOrigineToChildren(List<Block> blocks) {
+        Integer fork_offset = computeForkOffset(blocks);
+        Point point = chooseAndUpdateCoordinates(0, getFathers().get(0).getBestCoordinates().y + 150);
+        Integer outgoingTransition = this.notFinalTransitions().size();
+
+        for (Integer x_it = point.x - (outgoingTransition-1)*fork_offset; x_it <= point.x + (outgoingTransition-1)*fork_offset; x_it += 2*fork_offset) {
+            this.origines.add(new Point(x_it, point.y+40));
+        }
+
+        List<Block> children = new ArrayList<>();
+        for (Transition transition: transitions) {
+            Block nextBlock = Main.getBlockFromName(blocks, transition.getDirection());
+            if (!(nextBlock instanceof EndState))
+                children.add(nextBlock);
+        }
+
+        Collections.sort(children, new Comparator<Block>() {
+            @Override
+            public int compare(Block b1, Block b2) {
+                return (b1.notFinalTransitions().size() > b2.notFinalTransitions().size() ? -1 : 1);
+            }
+        });
+
+        for (Block child: children) {
+            if (child instanceof EndState) continue;
+
+            Set<Block> fathers = child.getUniqueFathers();
+            if (!fathers.isEmpty()) {
+                Integer best_x = 0;
+                Integer realFathers = 0;
+                for (Block father : fathers) {
+                    if (!father.equals(this)) {
+                        Transition transition = father.getUniqueTransition(child.getName());
+                        if (transition != null)
+                            if (child.transitionMayBeUsed(blocks, transition, father)) {
+                                Integer father_x = father.getUniqueOrigine(0).x;
+                                transition.setOrigine(new Point(father_x, 0));
+                                realFathers++;
+                                best_x += father_x;
+                            }
+                    }
+                }
+
+                if (realFathers != 0)
+                    best_x /= realFathers;
+
+                Transition transition = this.getUniqueTransition(child.getName());
+                if (transition != null)
+                    if (child.transitionMayBeUsed(blocks, transition, this)) {
+                        Integer father_x = this.getUniqueOrigine(best_x).x;
+                        transition.setOrigine(new Point(father_x, this.getFatherOrigine().y));
+                        best_x *= realFathers;
+                        best_x += father_x;
+                        best_x /= realFathers + 1;
+                    }
+                child.setBestCoordinates(new Point(best_x, 0));
+            }
+        }
+    }
 }
