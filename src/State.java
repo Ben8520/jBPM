@@ -42,7 +42,7 @@ class State extends Block{
     }
 
     @Override
-    Point getUniqueOrigine() {
+    Point getUniqueOrigine(Integer current_x) {
         return origine;
     }
 

@@ -1,6 +1,5 @@
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
-import org.apache.batik.svggen.font.*;
 import org.jdom2.Attribute;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -22,15 +21,15 @@ public class Main {
     private static final Map<String, Boolean> booleanValues;
     static {
         Map<String, Boolean> map = new HashMap<>();
-        map.put("skipPublicite", true);
-        map.put("skipDCE", true);
-        map.put("skipRegistreDepot", true);
-        map.put("skipQuestionReponse", true);
-        map.put("skipRegistreRetrait", true);
-        map.put("skipCandidature", true);
-        map.put("skipRecommendation", true);
-        map.put("skipCalendrierReel", true);
-        map.put("skipSuiviEchange", true);
+        map.put("skipPublicite", false);
+        map.put("skipDCE", false);
+        map.put("skipRegistreDepot", false);
+        map.put("skipQuestionReponse", false);
+        map.put("skipRegistreRetrait", false);
+        map.put("skipCandidature", false);
+        map.put("skipRecommendation", false);
+        map.put("skipCalendrierReel", false);
+        map.put("skipSuiviEchange", false);
         booleanValues = Collections.unmodifiableMap(map);
     }
 
@@ -174,6 +173,7 @@ public class Main {
                 String handlerName = attribute.getValue();
                 if (handlerName.contains("SkipStepDecisionHandler")) {
                     String boolVar = ((Element) handlers.get(0).getContent().get(1)).getContent().get(0).getValue();
+                    decision.setParameter(boolVar);
                     if (booleanValues.get(boolVar)) {
 //                            Follow "directionVrai" transition
                         Iterator<Element> iter = handlers.iterator();
@@ -182,6 +182,16 @@ public class Main {
                             if ("directionVrai".equals(element_it.getAttributes().get(0).getValue())) {
                                 transitionDirection = element_it.getAttributes().get(1).getValue();
                                 skipMap.put(element.getAttributes().get(0).getValue(), transitionDirection);
+                            }
+                        }
+                    } else {
+//                            Follow "directionFaux" transition
+                        Iterator<Element> iter = handlers.iterator();
+                        while (iter.hasNext()) {
+                            Element element_it = iter.next();
+                            if ("directionFaux".equals(element_it.getAttributes().get(0).getValue())) {
+                                transitionDirection = element_it.getAttributes().get(1).getValue();
+                                skipMap.put(element.getAttributeValue("name"), transitionDirection);
                             }
                         }
                     }
@@ -267,6 +277,20 @@ public class Main {
 
         Set<Block> activeBlocks = new HashSet<>();
         Set<Block> doneBlocks = new HashSet<>();
+//        If booleanValue is false, just skip decision
+        if (block instanceof Decision) {
+            Boolean boolVal = booleanValues.get(((Decision) block).getParameter());
+            if (boolVal != null && !boolVal) {
+                block.setSkipped(Boolean.TRUE);
+                return;
+            }
+
+            if (block.transitions.size() > 2) {
+                block.setSkipped(Boolean.TRUE);
+                return;
+            }
+        }
+
         for (Transition transition: block.getTransitions())
             if (!transition.getDirection().equals(finalDestination))
                 activeBlocks.add(getBlockFromName(blocks, transition.getDirection()));
@@ -308,10 +332,23 @@ public class Main {
                 Integer best_x = 0;
                 Integer realFathers = 0;
                 for (Block father : fathers) {
+                    if (father instanceof Fork) continue;
                     Transition transition = father.getUniqueTransition(block.getName());
                     if (transition != null)
                         if (block.transitionMayBeUsed(blocks, transition, father)) {
-                            Integer father_x = father.getUniqueOrigine().x;
+                            Integer father_x = father.getUniqueOrigine(0).x;
+                            transition.setOrigine(new Point(father_x, 0));
+                            best_x += father_x;
+                            realFathers++;
+                        }
+                }
+
+                for (Block father : fathers) {
+                    if (!(father instanceof Fork)) continue;
+                    Transition transition = father.getUniqueTransition(block.getName());
+                    if (transition != null)
+                        if (block.transitionMayBeUsed(blocks, transition, father)) {
+                            Integer father_x = father.getUniqueOrigine(best_x).x;
                             transition.setOrigine(new Point(father_x, 0));
                             best_x += father_x;
                             realFathers++;

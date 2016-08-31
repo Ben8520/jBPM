@@ -5,9 +5,11 @@ import java.util.List;
 class Decision extends Block {
 
     private Point origine = new Point();
+    private String parameter;
 
     Decision(String name) {
         super(name);
+        this.parameter = null;
     }
 
     @Override
@@ -34,6 +36,7 @@ class Decision extends Block {
 
             svgGenerator.setStroke(new BasicStroke(5));
             svgGenerator.drawPolygon(polygon);
+            rectangles.add(new Rectangle(point.x - 20, point.y - 20, 40, 40));
             svgGenerator.setColor(Color.red);
             svgGenerator.drawString(this.getName(), point.x + 15, point.y - 15);
             svgGenerator.fillPolygon(polygon);
@@ -52,7 +55,7 @@ class Decision extends Block {
     }
 
     @Override
-    Point getUniqueOrigine() {
+    Point getUniqueOrigine(Integer current_x) {
         return origine;
     }
 
@@ -77,5 +80,13 @@ class Decision extends Block {
         if (x_offset > 0)
             return new Point(getBestCoordinates().x + 22, getBestCoordinates().y);
         return new Point(getBestCoordinates().x - 22, getBestCoordinates().y);
+    }
+
+    public String getParameter() {
+        return parameter;
+    }
+
+    public void setParameter(String parameter) {
+        this.parameter = parameter;
     }
 }

@@ -1,5 +1,4 @@
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -22,7 +21,7 @@ class StartState extends Block{
     }
 
     @Override
-    Point getUniqueOrigine() {
+    Point getUniqueOrigine(Integer current_x) {
         return origine;
     }
 

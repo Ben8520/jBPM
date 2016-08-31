@@ -4,6 +4,7 @@ import java.util.List;
 
 class Fork extends Block {
     private Set<Point> origines = new LinkedHashSet<>();
+    private Set<Point> alreadyGivenOrigines = new LinkedHashSet<>();
 
     Fork(String name) {
         super(name);
@@ -38,17 +39,28 @@ class Fork extends Block {
     }
 
     @Override
-    Point getUniqueOrigine() {
-        List<Point> origineList = new ArrayList<>(origines);
-        Point retVal = origineList.get(0);
-        origines.remove(retVal);
-        origines.add(retVal);
-        return retVal;
+    Point getUniqueOrigine(Integer current_x) {
+        Integer min_dx = Integer.MAX_VALUE;
+        Point origineToGive = new Point();
+        for (Point origine: origines) {
+            if (alreadyGivenOrigines.contains(origine)) continue;
+            if (Math.abs(current_x - origine.x) < min_dx) {
+                min_dx = Math.abs(current_x - origine.x);
+                origineToGive = origine;
+            }
+        }
+
+        if (origineToGive != new Point()) {
+            alreadyGivenOrigines.add(origineToGive);
+            return origineToGive;
+        }
+
+        return null;
     }
 
     @Override
     Point getFatherOrigine() {
-        List<Point> origineList = new ArrayList<>(origines);
+        List<Point> origineList = new ArrayList<>(alreadyGivenOrigines);
         return origineList.get(origineList.size() - 1);
     }
 
@@ -62,7 +74,7 @@ class Fork extends Block {
         for (Block father: getFathers()) {
             Transition transition = father.getTransition(this);
             if (transition != null) {
-                transition.setOrigine(father.getUniqueOrigine());
+                transition.setOrigine(father.getFatherOrigine());
                 transition.setDestination(new Point(getBestCoordinates().x, getBestCoordinates().y - 19));
             }
         }

@@ -53,7 +53,7 @@ abstract class Block {
 
         for (Transition transition: transitions) {
             Block directionBlock = Main.getBlockFromName(blocks, transition.getDirection());
-            if (sons.add(directionBlock) && !transition.getName().contains("retour"))
+            if (sons.add(directionBlock) && !transition.getName().contains("retour") && !transition.getName().contains("directionFaux"))
                 if (directionBlock != null) {
                     directionBlock.findSons(sons, blocks);
                 }
@@ -127,7 +127,7 @@ abstract class Block {
                 "}\n";
     }
 
-    abstract Point getUniqueOrigine();
+    abstract Point getUniqueOrigine(Integer current_x);
 
     Point chooseAndUpdateCoordinates(Integer x, Integer y) {
         x = (bestCoordinates.x != 0 ? bestCoordinates.x : x);
@@ -152,7 +152,7 @@ abstract class Block {
     }
 
     Point getFatherOrigine() {
-        return this.getUniqueOrigine();
+        return this.getUniqueOrigine(0);
     }
 
     Transition getTransition(Block block) {
