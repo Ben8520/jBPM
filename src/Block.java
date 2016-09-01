@@ -37,10 +37,14 @@ abstract class Block {
     boolean transitionMayBeUsed(List<Block> blocks, Transition transition, Block father) {
         if (transition.getName() == null)
             return  true;
+
+        if (transition.getDirection().equals(father.name))
+            return false;
+
         if(!transition.getName().contains("retour") && !transition.getName().contains("directionFaux"))
             return  true;
 
-        else if (transition.getName().contains("directionFaux")){
+        if (transition.getName().contains("directionFaux")){
             HashSet<Block> sons = new HashSet<>();
             this.findSons(sons, blocks);
 
@@ -54,7 +58,7 @@ abstract class Block {
     private void findSons(HashSet<Block> sons, List<Block> blocks) {
 
         for (Transition transition: transitions) {
-            Block directionBlock = Main.getBlockFromName(blocks, transition.getDirection());
+            Block directionBlock = SvgGenerator.getBlockFromName(blocks, transition.getDirection());
             if (sons.add(directionBlock)) {
                 if (transition.getName() != null) {
                     if (!transition.getName().contains("retour") && !transition.getName().contains("directionFaux"))
@@ -84,7 +88,7 @@ abstract class Block {
         for (Transition transition: transitions) {
             transition.paint(svgGenerator, rectangles, blocks);
             List<Block> blockList = new ArrayList<>(blocksLeft);
-            Block nextBlock = Main.getBlockFromName(blockList, transition.getDirection());
+            Block nextBlock = SvgGenerator.getBlockFromName(blockList, transition.getDirection());
             if (blocksLeft.contains(nextBlock)) {
                 if (nextBlock != null) {
                     nextBlock.drawAllTransitions(svgGenerator, blocks, blocksLeft, rectangles);
@@ -153,7 +157,7 @@ abstract class Block {
         }
 
         for (Transition transition: transitions) {
-            Block destination = Main.getBlockFromName(blocks, transition.getDirection());
+            Block destination = SvgGenerator.getBlockFromName(blocks, transition.getDirection());
             if (!blocksLeft.contains(destination))
                 transition.setOrigine(this.bestCoordinates);
         }
@@ -184,16 +188,15 @@ abstract class Block {
         return bestCoordinates;
     }
 
-    public Integer getArrivingTransitions() {
+    Integer getArrivingTransitions() {
         return arrivingTransitions;
     }
 
-    public Boolean getSkipped() {
+    Boolean getSkipped() {
         return skipped;
     }
 
-    public void setSkipped(Boolean skipped) {
+    void setSkipped(Boolean skipped) {
         this.skipped = skipped;
     }
-
 }

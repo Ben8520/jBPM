@@ -70,7 +70,7 @@ class Decision extends Block {
         }
 
         for (Transition transition: transitions) {
-            Block destination = Main.getBlockFromName(blocks, transition.getDirection());
+            Block destination = SvgGenerator.getBlockFromName(blocks, transition.getDirection());
             if (!blocksLeft.contains(destination))
                 transition.setOrigine(this.getBestCoordinates());
         }
@@ -82,11 +82,11 @@ class Decision extends Block {
         return new Point(getBestCoordinates().x - 22, getBestCoordinates().y);
     }
 
-    public String getParameter() {
+    String getParameter() {
         return parameter;
     }
 
-    public void setParameter(String parameter) {
+    void setParameter(String parameter) {
         this.parameter = parameter;
     }
 }

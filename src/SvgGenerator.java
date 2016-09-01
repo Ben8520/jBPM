@@ -17,26 +17,22 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
-public class Main {
-    private static final Map<String, Boolean> booleanValues;
-    static {
-        Map<String, Boolean> map = new HashMap<>();
-        map.put("skipPublicite", false);
-        map.put("skipDCE", false);
-        map.put("skipRegistreDepot", false);
-        map.put("skipQuestionReponse", false);
-        map.put("skipRegistreRetrait", false);
-        map.put("skipCandidature", false);
-        map.put("skipRecommendation", false);
-        map.put("skipCalendrierReel", false);
-        map.put("skipSuiviEchange", false);
-        booleanValues = Collections.unmodifiableMap(map);
+class SvgGenerator {
+
+    private final String jbpmFilePath;
+    private final String svgOutputFilePath;
+    private Map<String, Boolean> booleanValues;
+
+    SvgGenerator(String jbpmFilePath, Map<String, Boolean> booleanValues) {
+        this.jbpmFilePath = jbpmFilePath;
+        this.svgOutputFilePath = jbpmFilePath.substring(0, jbpmFilePath.indexOf(".")) + ".svg";
+        this.booleanValues = booleanValues;
     }
 
-    public static void main(String[] args) {
+    void createSvgOutput() {
         try {
 //            Open jBPM file
-            File inputFile = new File("src/mapa_ouverte.xml");
+            File inputFile = new File(jbpmFilePath);
 
 //            Parse jBPM file and create corresponding objects
             SAXBuilder saxBuilder = new SAXBuilder();
@@ -53,14 +49,14 @@ public class Main {
             svgGenerator.setFont(new Font("Arial", Font.CENTER_BASELINE, 8));
 
 //            Add blocks to SVG file
-            Main painter = new Main();
+            SvgGenerator painter = new SvgGenerator(jbpmFilePath, booleanValues);
             List<Point> points = painter.paint(svgGenerator, blocks);
 
 //            Generate SVG output file
-            Writer out = new OutputStreamWriter(openNewFile("output.svg"), "UTF-8");
+            Writer out = new OutputStreamWriter(openNewFile(svgOutputFilePath), "UTF-8");
             svgGenerator.stream(out, false);
 
-            updateFileConfiguration(points, Paths.get("output.svg"));
+            updateFileConfiguration(points, Paths.get(svgOutputFilePath));
 
         }catch(IOException | JDOMException e){
             e.printStackTrace();
@@ -91,7 +87,7 @@ public class Main {
         Point max = new Point(Integer.MIN_VALUE, Integer.MIN_VALUE);
 
         List<Block> activeBlocks = new ArrayList<>();
-        StartState startState = (StartState) Main.getBlockFromName(blocks, "start-state");
+        StartState startState = (StartState) getBlockFromName(blocks, "start-state");
         activeBlocks.add(startState);
         List<Block> blocksLeft = new ArrayList<>(blocks);
         List<Rectangle> rectangles = new ArrayList<>();
@@ -109,8 +105,21 @@ public class Main {
             x_offset = 1200 / activeBlocks.size();
             x_svg = x_offset / 2;
 
-            Main.computeBestCoordinates(blocks, activeBlocks);
+            if (activeBlocks.size() > 1)
+                Collections.sort(activeBlocks, new Comparator<Block>() {
+                    @Override
+                    public int compare(Block b1, Block b2) {
+                        if (b1.notFinalTransitions().size() < b2.notFinalTransitions().size())
+                            return -1;
+                        else if (b1.notFinalTransitions().size() == b2.notFinalTransitions().size()) {
+                            if (b1 instanceof Fork) return 1;
+                            if (b2 instanceof Fork) return -1;
+                        }
+                        return 1;
+                    }
+                });
             for (Block block: activeBlocks) {
+                computeBestCoordinates(blocks, block);
                 List<Point> maxs = block.paint(svgGenerator, x_svg, y_svg, x_offset, activeBlocks.size() == 1, rectangles, blocks);
                 min = smallerOne(maxs.get(0), min);
                 max = greaterOne(maxs.get(1), max);
@@ -119,11 +128,14 @@ public class Main {
 
                 Set<Transition> transitions = block.getTransitions();
                 for (Transition transition: transitions) {
-                    Block nextBlock = Main.getBlockFromName(blocksLeft, transition.getDirection());
+                    Block nextBlock = SvgGenerator.getBlockFromName(blocksLeft, transition.getDirection());
 
-                    if (nextBlock != null)
+                    if (nextBlock != null) {
                         if (nextBlock.incArrivedTransition())
                             nextActiveBlocks.add(nextBlock);
+                    } else if (SvgGenerator.getBlockFromName(blocks, transition.getDirection()) == null && !transition.getDirection().equals("end"))
+                        System.err.println("Block named " + transition.getDirection() + " not found..");
+
                 }
 
                 x_svg += x_offset;
@@ -142,14 +154,14 @@ public class Main {
         return Arrays.asList(min, max);
     }
 
-    private static List<Block> createObjectsFromXML(List<Element> blockList) {
+    private List<Block> createObjectsFromXML(List<Element> blockList) {
 
         List<Block> blocks = new ArrayList<>();
         Map<String, String> skipMap = new HashMap<>();
 
         for (Element element : blockList) {
 
-            String transitionDirection = "";
+            String transitionDirection;
 
 //            Create blocks
             if ("start-state".equals(element.getName())) {
@@ -174,7 +186,7 @@ public class Main {
                 if (handlerName.contains("SkipStepDecisionHandler")) {
                     String boolVar = ((Element) handlers.get(0).getContent().get(1)).getContent().get(0).getValue();
                     decision.setParameter(boolVar);
-                    if (booleanValues.get(boolVar)) {
+                    if (this.booleanValues.get(boolVar)) {
 //                            Follow "directionVrai" transition
                         Iterator<Element> iter = handlers.iterator();
                         while (iter.hasNext()) {
@@ -239,7 +251,7 @@ public class Main {
             while (iterator.hasNext()) {
                 Transition transition = iterator.next();
                 while (skipMap.get(transition.getDirection()) != null) {
-                    Main.setBlockSkipped(blocks, Main.getBlockFromName(blocks, transition.getDirection()), skipMap.get(transition.getDirection()));
+                    setBlockSkipped(blocks, SvgGenerator.getBlockFromName(blocks, transition.getDirection()), skipMap.get(transition.getDirection()));
                     transition.setDirection(skipMap.get(transition.getDirection()));
                 }
             }
@@ -261,7 +273,7 @@ public class Main {
                 Block directionBlock = getBlockFromName(blocks, transition.getDirection());
                 if (directionBlock != null) {
                     directionBlock.incArrivingTransition(blocks, transition, block);
-                } else System.out.println("ERROR in block named " + block.getName() +
+                } else System.err.println("ERROR in block named " + block.getName() +
                         " due to transition named " + transition.getName() + " to " + transition.getDirection());
             }
 
@@ -273,7 +285,7 @@ public class Main {
         return blocks;
     }
 
-    private static void setBlockSkipped(List<Block> blocks, Block block, String finalDestination) {
+    private void setBlockSkipped(List<Block> blocks, Block block, String finalDestination) {
         if (block == null)
             return;
 
@@ -281,7 +293,7 @@ public class Main {
         Set<Block> doneBlocks = new HashSet<>();
 //        If booleanValue is false, just skip decision
         if (block instanceof Decision) {
-            Boolean boolVal = booleanValues.get(((Decision) block).getParameter());
+            Boolean boolVal = this.booleanValues.get(((Decision) block).getParameter());
             if (boolVal != null && !boolVal) {
                 block.setSkipped(Boolean.TRUE);
                 return;
@@ -297,19 +309,19 @@ public class Main {
             if (!transition.getDirection().equals(finalDestination))
                 activeBlocks.add(getBlockFromName(blocks, transition.getDirection()));
 
-        while ((activeBlocks.size() != 1 || !activeBlocks.contains(Main.getBlockFromName(blocks, finalDestination))) && !activeBlocks.isEmpty()) {
+        while ((activeBlocks.size() != 1 || !activeBlocks.contains(SvgGenerator.getBlockFromName(blocks, finalDestination))) && !activeBlocks.isEmpty()) {
             Set<Block> nextBlocks = new HashSet<>();
             for (Block block_it: activeBlocks) {
-                if (!block_it.equals(Main.getBlockFromName(blocks, finalDestination))) block_it.setSkipped(Boolean.TRUE);
+                if (!block_it.equals(SvgGenerator.getBlockFromName(blocks, finalDestination))) block_it.setSkipped(Boolean.TRUE);
 
                 doneBlocks.add(block_it);
 
-                if (block_it.getTransitions().isEmpty() && !doneBlocks.contains(Main.getBlockFromName(blocks, "end"))) nextBlocks.add(Main.getBlockFromName(blocks, "end"));
+                if (block_it.getTransitions().isEmpty() && !doneBlocks.contains(SvgGenerator.getBlockFromName(blocks, "end"))) nextBlocks.add(SvgGenerator.getBlockFromName(blocks, "end"));
                 else
                     for (Transition transition_it: block_it.getTransitions())
-                        if (block_it.equals(Main.getBlockFromName(blocks, finalDestination))) nextBlocks.add(block_it);
-                        else if (!doneBlocks.contains(Main.getBlockFromName(blocks, transition_it.getDirection())))
-                            nextBlocks.add(Main.getBlockFromName(blocks, transition_it.getDirection()));
+                        if (block_it.equals(SvgGenerator.getBlockFromName(blocks, finalDestination))) nextBlocks.add(block_it);
+                        else if (!doneBlocks.contains(SvgGenerator.getBlockFromName(blocks, transition_it.getDirection())))
+                            nextBlocks.add(SvgGenerator.getBlockFromName(blocks, transition_it.getDirection()));
             }
             activeBlocks = nextBlocks;
         }
@@ -325,33 +337,32 @@ public class Main {
         return cleanBlocks;
     }
 
-    private static void computeBestCoordinates(List<Block> blocks, List<Block> activeBlocks) {
-        for (Block block: activeBlocks) {
-            if (block instanceof EndState) continue;
+    private void computeBestCoordinates(List<Block> blocks, Block block) {
+        if (block instanceof EndState) return;
 
-            Set<Block> fathers = block.getUniqueFathers();
-            if (!fathers.isEmpty()) {
-                Integer best_x = 0;
-                Integer realFathers = 0;
-                for (Block father : fathers) {
-                    Transition transition = father.getUniqueTransition(block.getName());
-                    if (transition != null)
-                        if (block.transitionMayBeUsed(blocks, transition, father)) {
-                            Integer father_x = father.getUniqueOrigine(0).x;
-                            transition.setOrigine(new Point(father_x, 0));
-                            best_x += father_x;
-                            realFathers++;
-                        }
-                }
+        Set<Block> fathers = block.getUniqueFathers();
+        if (!fathers.isEmpty()) {
+            Integer best_x = 0;
+            Integer realFathers = 0;
+            for (Block father : fathers) {
+                Transition transition = father.getUniqueTransition(block.getName());
+                if (transition != null)
+                    if (block.transitionMayBeUsed(blocks, transition, father)) {
+                        Integer father_x = father.getUniqueOrigine(0).x;
+                        transition.setOrigine(new Point(father_x, 0));
+                        best_x += father_x;
+                        realFathers++;
+                    }
+            }
 
-                if (realFathers != 0)
-                    best_x /= realFathers;
-                block.setBestCoordinates(new Point(best_x, 0));
-            }
-            if (block instanceof Fork) {
-                ((Fork)block).assignOrigineToChildren(blocks);
-            }
+            if (realFathers != 0)
+                best_x /= realFathers;
+            block.setBestCoordinates(new Point(best_x, 0));
         }
+        if (block instanceof Fork && block.transitions.size() > 1) {
+            ((Fork)block).assignOrigineToChildren(blocks);
+        }
+
     }
 
     private static FileOutputStream openNewFile(String name) throws IOException {

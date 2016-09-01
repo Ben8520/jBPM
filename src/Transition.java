@@ -39,7 +39,7 @@ class Transition {
     private Boolean lineIntersectSth(List<Rectangle> rectangles, Line2D line) {
         for (Rectangle rectangle: rectangles)
             if (line.intersects(rectangle))
-                if (!(line.getX1() != line.getX2() && rectangle.width == 20))
+                if (line.getX1() == line.getX2())
                     return true;
 
         return false;
@@ -68,7 +68,7 @@ class Transition {
             line = new Line2D.Double(origine.x + x_offset + (x_offset < 0 ? (-20) : 20), origine.y, origine.x + x_offset + (x_offset < 0 ? (-20) : 20), destination.y);
         } while (lineIntersectSth(rectangles, line));
 
-        Block block = Main.getBlockFromName(blocks, this.from);
+        Block block = SvgGenerator.getBlockFromName(blocks, this.from);
         if (block != null && block instanceof Decision) {
             origine = ((Decision)block).getLeftOrRightCorner(x_offset);
             svgGenerator.drawLine(origine.x, origine.y, origine.x + x_offset,origine.y);
@@ -117,12 +117,8 @@ class Transition {
             this.destination.y = destination.y;
     }
 
-    public void setDirection(String direction) {
+    void setDirection(String direction) {
         this.direction = direction;
-    }
-
-    Point getDestination() {
-        return destination;
     }
 
     @Override
@@ -132,8 +128,7 @@ class Transition {
 
         Transition that = (Transition) o;
 
-        if (!from.equals(that.from)) return false;
-        return direction.equals(that.direction);
+        return from.equals(that.from) && direction.equals(that.direction);
 
     }
 
