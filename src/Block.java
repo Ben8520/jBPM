@@ -107,7 +107,10 @@ abstract class Block {
     }
 
     Set<Block> getUniqueFathers() {
-        return new HashSet<>(fathers);
+        Set<Block> retVal = new HashSet<>(fathers);
+        if (retVal.contains(this))
+            retVal.remove(this);
+        return retVal;
     }
 
     List<Block> getFathers() {

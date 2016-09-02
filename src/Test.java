@@ -1,3 +1,5 @@
+import org.apache.xpath.operations.Bool;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Collections;
@@ -19,18 +21,25 @@ public class Test {
         map.put("skipCalendrierReel", false);
         map.put("skipSuiviEchange", true);
 
-        File[] jbpmFiles = new File(args[0]).listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".xml") && !name.startsWith(".");
-            }
-        });
+        if (args[0].endsWith("/")) {
+            File[] jbpmFiles = new File(args[0]).listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".xml") && !name.startsWith(".");
+                }
+            });
 
-        if (jbpmFiles != null) {
-            for (File file: jbpmFiles) {
-                SvgGenerator svgGenerator = new SvgGenerator(file.getPath(), map);
-                svgGenerator.createSvgOutput();
+            if (jbpmFiles != null) {
+                for (File file : jbpmFiles) {
+                    SvgGenerator svgGenerator = new SvgGenerator(file.getPath(), map);
+                    svgGenerator.createSvgOutput();
+                }
             }
+        } else if (args[0].endsWith(".xml")){
+            File jbpmFile = new File(args[0]);
+            SvgGenerator svgGenerator = new SvgGenerator(jbpmFile.getPath(), map);
+            svgGenerator.createSvgOutput();
         }
+
     }
 }

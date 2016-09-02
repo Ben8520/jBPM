@@ -105,7 +105,7 @@ class Transition {
         if (this.origine.x == 0)
             this.origine.x = origine.x;
 
-        if (this.origine.y == 0)
+        if (this.origine.y < origine.y)
             this.origine.y = origine.y;
     }
 
@@ -138,4 +138,5 @@ class Transition {
         result = 31 * result + direction.hashCode();
         return result;
     }
+
 }

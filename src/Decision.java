@@ -38,7 +38,7 @@ class Decision extends Block {
             svgGenerator.drawPolygon(polygon);
             rectangles.add(new Rectangle(point.x - 20, point.y - 20, 40, 40));
             svgGenerator.setColor(Color.red);
-            svgGenerator.drawString(this.getName(), point.x + 15, point.y - 15);
+//            svgGenerator.drawString(this.getName(), point.x + 15, point.y - 15);
             svgGenerator.fillPolygon(polygon);
             svgGenerator.setStroke(new BasicStroke(1));
             svgGenerator.setColor(Color.black);

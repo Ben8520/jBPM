@@ -141,7 +141,7 @@ class Fork extends Block {
                 if (transition != null)
                     if (child.transitionMayBeUsed(blocks, transition, this)) {
                         Integer father_x = this.getUniqueOrigine(best_x).x;
-                        transition.setOrigine(new Point(father_x, this.getFatherOrigine().y));
+                        transition.setOrigine(new Point(father_x, this.getBestCoordinates().y + 40));
                         best_x *= realFathers;
                         best_x += father_x;
                         best_x /= realFathers + 1;
@@ -175,13 +175,17 @@ class Fork extends Block {
             if (child.getFathers().size() == 1 && child.getFathers().get(0).equals(this))
                 orderedChildren = addSmart(orderedChildren, child);
 
+
         assert orderedChildren.size() != 0;
 
         for (Block child: children) {
             if (orderedChildren.contains(child)) continue;
+            Integer maxFatherIndex = 0;
             for (Block block: orderedChildren)
                 if (child.getFathers().contains(block))
-                    orderedChildren = addSafe(orderedChildren, orderedChildren.indexOf(block)+1, child);
+                    maxFatherIndex = orderedChildren.indexOf(block) + 1;
+            orderedChildren = addSafe(orderedChildren, maxFatherIndex, child);
+
         }
 
         Collections.sort(children, new Comparator<Block>() {
