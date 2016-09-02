@@ -1,8 +1,5 @@
-import org.apache.xpath.operations.Bool;
-
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 

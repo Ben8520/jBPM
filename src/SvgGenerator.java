@@ -7,8 +7,6 @@ import org.jdom2.input.SAXBuilder;
 import org.w3c.dom.DOMImplementation;
 
 import java.awt.*;
-import java.awt.Font;
-import java.awt.Point;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -46,7 +44,7 @@ class SvgGenerator {
             String svgNS = "http://www.w3.org/2000/svg";
             org.w3c.dom.Document svgDocument =  domImpl.createDocument(svgNS, "svg", null);
             SVGGraphics2D svgGenerator = new SVGGraphics2D(svgDocument);
-            svgGenerator.setFont(new Font("Arial", Font.CENTER_BASELINE, 8));
+            svgGenerator.setFont(new Font("Arial", Font.CENTER_BASELINE, 28));
 
 //            Add blocks to SVG file
             SvgGenerator painter = new SvgGenerator(jbpmFilePath, booleanValues);
@@ -96,7 +94,7 @@ class SvgGenerator {
         Integer y_svg = 0;
 
         Integer x_offset;
-        Integer y_offset = 150;
+        Integer y_offset = 250;
 
         while (!blocksLeft.isEmpty() && !activeBlocks.isEmpty()) {
 //            Paint active blocks and remove them from block list and
