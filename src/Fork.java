@@ -46,11 +46,11 @@ class Fork extends Block {
         for (Transition transition: transitions) {
             Block nextBlock = SvgGenerator.getBlockFromName(blocks, transition.getDirection());
             if (nextBlock instanceof Fork) {
-                forkOffset += (nextBlock.notFinalTransitions().size() - 2) * 350;
+                forkOffset += (nextBlock.notFinalTransitions().size() - 1) * 350;
             }
         }
 
-        return (forkOffset > 350 ? forkOffset + 300 : 350);
+        return (forkOffset > 350 ? forkOffset + 300 : 355);
     }
 
     @Override
