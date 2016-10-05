@@ -12,10 +12,10 @@ public class Test {
         map.put("skipDCE", true);
         map.put("skipRegistreDepot", true);
         map.put("skipQuestionReponse", true);
-        map.put("skipRegistreRetrait", false);
+        map.put("skipRegistreRetrait", true);
         map.put("skipCandidature", true);
         map.put("skipRecommendation", true);
-        map.put("skipCalendrierReel", false);
+        map.put("skipCalendrierReel", true);
         map.put("skipSuiviEchange", true);
 
         if (args[0].endsWith("/")) {

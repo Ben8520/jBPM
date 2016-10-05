@@ -76,7 +76,7 @@ class SvgGenerator {
                 "\" height=\"" + height + "\"");
         svgContent.set(5,"/><g transform='translate(" + translate_x + " " + translate_y + ")'" );
         svgContent.set(7, "><rect fill=\"white\" x=\"" + x_min + "\" y=\"" + y_min + "\" " +
-                "width=\"100%\" height=\"100%\"/" + svgContent.get(7).substring(4));
+                "width=\"" + width + "\" height=\"" + height + "\"/" + svgContent.get(7).substring(4));
         Files.write(path, svgContent, StandardCharsets.UTF_8);
     }
 

@@ -16,11 +16,6 @@ class Fork extends Block {
         Point point = chooseAndUpdateCoordinates(x, y);
         Integer outgoingTransition = this.notFinalTransitions().size();
 
-        if (outgoingTransition > 1)
-            svgGenerator.setColor(Color.BLUE);
-//        else if (outgoingTransition == 1)
-//            svgGenerator.setColor(Color.MAGENTA);
-
         svgGenerator.setStroke(new BasicStroke(4));
         svgGenerator.drawLine(point.x, point.y-20, point.x, point.y);
 
